@@ -11,7 +11,7 @@ const { mysql_key } = require('../config/keys')
 
 const sequelize = new Sequelize('node_complete', 'root', mysql_key, { 
     // this is an option for mysql2 to be set
-    //  because there are different sql out ther.
+    //  because there are different sql out there.
     dialect: 'mysql',
     // default is 'localhost'. not required to explitly specify it.
     host: 'localhost',

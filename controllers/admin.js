@@ -21,10 +21,24 @@ exports.getEditProduct = (req, res, next) => {
 
     const id = req.params.id;
 
-    Product.findByPk(id)
+    console.log('id:========================================> ', id);
+
+    // 2) With Assoication
+    // It is logically more clear because it is from the user who is using the associated table 
+    //      by using 'join'
+    //  Looking for product's id to render current exsiting product information.
+    // It returns info in an array.
+    // ex) SELECT * FROM product whiere id = 1;
+    req.user.getProducts({ where: { id } })
+    
+    // 1) Without Associations
+    // It works but it is not clear where the qurry is from the admin or the user
+    // Product.findByPk(id)
 
         // here product itself is an instance of Product !!!***************
         .then(product => {
+
+            // const product = products[0];
             
             if(!product) res.redirect('/');
             
@@ -66,9 +80,18 @@ exports.postEditProduct = (req, res, next) => {
     // const updatedDescription = description;
     // const updatedPrice = price;
     
+    
     // It is like findOne that returns instance.
     //  which is same as mongoose.
+    
+    // It is not required to change because as we render getEditProduct 
+    // with req.user, we can assume that this product belongs to the current req.user.
+    
+    // We do not need to use req.'user.getProducts()' here
+    //  because it is from 'getEditProduct' above which is 
+    //  arleady signed in.
     Product.findByPk(id)
+
         .then(product => {
             // const { id, title, price, imageUrl, description } = product;
             product.id = id;
@@ -84,6 +107,7 @@ exports.postEditProduct = (req, res, next) => {
             res.redirect('/admin/products');
         }).catch(e => {console.log(e)});
 
+    // Only with the json file.
     // const updatedProduct = new Product(id, updatedTitle, updatedImageUrl, updatedDescription, updatedPrice);
 
     // updatedProduct.save();
@@ -95,17 +119,34 @@ exports.postEditProduct = (req, res, next) => {
 // to get all data and render data to /admin/products and then to /admin/products ejs file
 exports.getProducts = (req, res, next) => {
 
-    // With sequelize
-
-    Product.findAll()
+    // With Associations
+    // Just need to get user's products, not all users' products
+    // 2)
+    req.user.getProducts()
         .then(products => {
+
             res.render('admin/products', {
                 products,
                 docTitle: 'Admin Products',
                 path: '/admin/products'
             });
+
         })
         .catch(e => { console.log(e)});
+
+
+
+    // // With sequelize
+    // 1)
+    // Product.findAll()
+    //     .then(products => {
+    //         res.render('admin/products', {
+    //             products,
+    //             docTitle: 'Admin Products',
+    //             path: '/admin/products'
+    //         });
+    //     })
+    //     .catch(e => { console.log(e)});
 
     // With the json file
     // Product.fetchAll(products => {
@@ -121,7 +162,7 @@ exports.getProducts = (req, res, next) => {
 
 }
 
-// to transfer 'user input data' to the database
+// to INSERT 'user input data' to the database
 exports.postAddProducts = (req, res, next) => {
     
     const {title, imageUrl, description, price } = req.body;
@@ -129,22 +170,62 @@ exports.postAddProducts = (req, res, next) => {
     // with sequelize
     // [INSERT]
     // create: immediately create element data(value) 
-    //      and automaticall save the value in the table.
+    //      and automaticallY save the value in the table.
     // build: (in javascript code) create element data(value)
-    //      and manually save the value with another cod.
+    //      and required to manually save the value with another code.
 
-    // query is structured by Promise()
-    Product.create({
+    // 3) More Elegant way : Product.create() => createProduct({})
+    // because when we create the schema in model, define(product)
+    //      creates a function with a name like 'createProduct()'
+    //      and then define a parameter(/ an object) like the ones below.
+    // Then, the function delivers to the req.user's attribute to be invoked.
+    // By the way, it uses promise() to return the result.
+    // The function name is strict!!!!
+    req.user.createProduct({
+
         title,
         price,
         imageUrl,
         description
+    
     })
-    .then(result => {
-        console.log(result);
-        res.redirect('/admin/products');
+    .then(product => {
+        res.redirect('/');
     })
-    .catch(e => {console.log(e)});
+    .catch(err => {
+        console.log(err);
+    });
+
+    // 2) With association
+    // Product.create({
+    //     title,
+    //     price,
+    //     imageUrl,
+    //     description,
+    //     // must be same name as in database *****
+    //     // the name(alias?) is automatically populated ****
+    //     //   when the primary key names are same????
+    //     userId : req.user.id
+    // })
+    // .then(result => {
+    //     console.log(result);
+    //     res.redirect('/admin/products');
+    // })
+    // .catch(e => {console.log(e)});
+
+    // 1) Without association
+    // query is structured by Promise()
+    // Product.create({
+    //     title,
+    //     price,
+    //     imageUrl,
+    //     description
+    // })
+    // .then(result => {
+    //     console.log(result);
+    //     res.redirect('/admin/products');
+    // })
+    // .catch(e => {console.log(e)});
 
     // only with mysql2 
     // 'product' for a particular document, not for all ducuments in a collectionn. 
@@ -164,8 +245,13 @@ exports.deleteProduct = (req, res, next) => {
     const { id } = req.body;
 
     // With sequelize: destroy() 
-    Product.findByPk(id)
-        .then(product => {
+    // It works but in the business logic point of view,
+    
+    //  it is more clear to use req.user.getProducts.
+    req.user.getProducts({ where: { id }})
+    // Product.findByPk(id)
+        .then(products => {
+            const product = products[0];
             return product.destroy();
         })
         .then(product => {

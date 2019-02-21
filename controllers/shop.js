@@ -34,14 +34,13 @@ exports.getProduct = (req, res, next) => {
     
     // id must be identified with router.get('/products/:id')
     const id = req.params.id;
-
-    // 'Product' is defined because we need to find a document out of all documents in a collection.
     
     // with sequelize
     // 2) id : id => first one is from column name wd defined
     //      the second one is form the variable above
     // Product.findAll({ where: {id}})
     //     .then(products => {
+        
     //         // products : [{ id, title, price, imageUrl, description }]
     //         // console.log('products:  %%%%%%%%%%%%%%%%%%5', products)
             

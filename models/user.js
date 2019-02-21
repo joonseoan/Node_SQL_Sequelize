@@ -27,6 +27,3 @@ module.exports = sequelize.define('user', {
    
 });
 
-module.exports = User;
-
-
