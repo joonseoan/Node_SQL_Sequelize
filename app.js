@@ -3,11 +3,10 @@ const app = express();
 const bodyParser = require('body-parser');
 const path = require('path');
 
-app.set('view engine', 'ejs');
-// app.set('views', 'views');
-
-// connection are up! ******************************************************8
+// connection are up! *****************************************************************
 const sequelize = require('./utils/database');
+
+// must run the models before 'sequelize.sync()' donw below. ********************
 const Product = require('./models/product');
 const User = require('./models/user');
 const Cart = require('./models/cart');
@@ -17,15 +16,17 @@ const adminRouters = require('./routes/admin');
 const shopRouters = require('./routes/shop'); 
 const { pageNotFound } = require('./controllers/pageNotFound');
 
+app.set('view engine', 'ejs');
+// app.set('views', 'views');
+
 app.use(bodyParser.urlencoded({extended: false}));
 
+// the path that html can access
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Eventually to gain req.user (logged in user) data 
-//  we need to make dummy data in database
-// Whenever the client requests something even regardless of routers
-//  the current existing user in the database
-//  is going to be assgined to req.user.
+// Eventually to gain req.user (logged in user) data/value 
+// Whenever the client requests something even regardless of routes
+//  the current existing user can be found in req.user (logge in).
 // Must be ahead of routers
 //  because it should be triggered and pulled out any time the user request exists.
 app.use((req, res, next) => {
@@ -34,7 +35,7 @@ app.use((req, res, next) => {
             if(user) req.user = user;
             next();
         })
-        .catch(e => { console.log(e) });
+        .catch(e => { throw new Error('Unable to find the user.') });
 });
 
 // routers
@@ -43,9 +44,9 @@ app.use(shopRouters);
 app.use(pageNotFound);
 
 // [Association]
-// Before all the models are up, we need to define associations
-// 'onDelete: 'CASCADE'': 
-//      If the USER deletes, products will be gone, as well.
+// Before all the models are up by 'sequelize.sync()', we need to define associations
+// 'onDelete: 'CASCADE' (Option): If the USER deletes, products will be gone, as well.
+
 /*  
     ASSOCIATION is set in console window.
     userId` INTEGER, PRIMARY KEY (`id`), FOREIGN KEY (`userId`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE) ENGINE=InnoDB; */
@@ -66,6 +67,7 @@ app.use(pageNotFound);
         
         */
         // A user has many Products
+        // automatically user.set/get/createProdutct()
         User.hasMany(Product);
 
 // ]
@@ -77,6 +79,7 @@ app.use(pageNotFound);
         Cart.belongsTo(User);
     
         // A user has only one Cart.
+        // protoType.user= set/get/createCart()
         User.hasOne(Cart);
 
 // ]
@@ -85,17 +88,19 @@ app.use(pageNotFound);
         // [ Many to Many Association ]
         // A foreign key pair is a primary key.
         // ************IMPORTANT
-        // In many to many relation, the either of tables can't take the reference.
+        // In a many-to-many relation, the either of tables can't take the reference (a foreign key).
         // because each table belongs to the counter partner.
         // In this many to many relation, the third (virtual) table reference
         //  must be create.
 
         // A Cart has many Products
         // the third (virtual) table here created by using CartItems model.
+        // product.get/set/addCarts() and addCart()
         Cart.belongsToMany(Product, { through: CartItems });
 
         // A product has many Cart???
         // Many customers reserve a product.
+        // cart.get/set/addProducts() and addProduct()
         Product.belongsToMany(Cart, { through: CartItems });
 
 // ]
@@ -123,16 +128,16 @@ app.use(pageNotFound);
 // sequelize.sync({ force: true })
 sequelize.sync()
 
-    // Eventually to gain req.user data we need to make dummy data in database
+    // Eventually to gain req.user data we need to make and store dummy data in database
     // Whenever the server tries to connect to database
     //  and to make the tables are available (up!)
-    // The table will create the first new user data automatically. 
-    // By the way squelelize.sync() is always invokced and run ahead of 
+    //  the table will create the first new user data automatically. 
+    // By the way squelelize.sync() is always invoked and run ahead of 
     //  app.use({ req.user = user}) up and above because it has app.listen()
-    .then((result) => {
+    .then(() => {
                 
         // finally after all models (tables) are created
-        //      of course, and all the apps (express) correctly are up as weel
+        //      of course, and all the apps (express) correctly are up as well
         //  listen to requests form the client.
 
         return User.findByPk(1);
@@ -146,9 +151,22 @@ sequelize.sync()
     }).then(user => {
 
         if(user) {
+            /* 
+            
+                    { id: 1,
+                    name: 'Max',
+                    email: 'test@test.com',
+                    updatedAt: 2019-02-23T03:54:59.524Z,
+                    createdAt: 2019-02-23T03:54:59.524Z },
+            
+            */
+            // console.log(user)
 
             // cart does not a specific attributes except for id
-            //  which is not necessary the user type.
+            //  which is not necessary one the user specifies.
+            
+            // Insert Data into database with user pk
+            // ----------------------------------------------------------------- Just create USER AND CART ASSOCIATION SO FAR, NOT PRODUCT!!!
             return user.createCart();
 
         }

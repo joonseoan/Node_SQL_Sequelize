@@ -115,30 +115,67 @@ exports.getIndex = (req, res, next) => {
 
  }
 
-
 // Required Association!!!
 exports.getCart = (req, res, next) => {
-
-    // It is not available.
-    // console.log(req.user.cart);
 
     // We must use req.user.getCart();
     req.user.getCart()
         .then(cart => {
 
+            /* 
+            
+                    cart {
+                        dataValues:
+                        { id: 1,
+                            createdAt: 2019-02-23T04:06:27.000Z,
+                            updatedAt: 2019-02-23T04:06:27.000Z,
+                            userId: 1 
+                        }
+            
+            */
             console.log(cart);
             
             /* 
                 Purlal 's' of getProducts() is because of many to many association
-                Only in many to many association, it possibly enables us 
+                Only in many to many association, it enables us 
                 to make getCarts(); and also getProducts() through CartItems.
-
+                
+                // product.get/set/addCarts() and addCart()
                 Cart.belongsToMany(Product, { through: CartItems });
+
+                // cart.get/set/addProducts() and addProduct()
                 Product.belongsToMany(Cart, { through: CartItems });
             */
             if(cart) return cart.getProducts();
         })
         .then(products => {
+
+            /* 
+                [ product {
+                    dataValues:
+                    { id: 1,
+                    title: 'aaa',
+                    price: 111,
+                    imageUrl: 'aaa',
+                    description: 'afasfa',
+                    createdAt: 2019-02-23T04:30:10.000Z,
+                    updatedAt: 2019-02-23T04:30:10.000Z,
+                    userId: 1,
+                    cartItems: [cartItems] },
+                     { id: 2,
+                    title: 'bbb',
+                    price: 33,
+                    imageUrl: 'bbb',
+                    description: 'bbb',
+                    createdAt: 2019-02-23T05:22:35.000Z,
+                    updatedAt: 2019-02-23T05:22:35.000Z,
+                    userId: 1,
+                    cartItems: [cartItems] }
+                ]      
+            
+            */
+            // console.log('products: ====================================================> ', products)
+            
             res.render('shop/cart', {
                 docTitle: 'Your Cart',
                 path: '/cart',
@@ -171,31 +208,83 @@ exports.getCart = (req, res, next) => {
 
 exports.postCart = (req, res, next) => {
 
+    // product id
     const id = req.body.id;
+
     let fetchCart;
+    let newQty = 1;
+
     req.user.getCart()
         .then(cart => {
+
             fetchCart = cart;
             // console.log(cart.getProducts());
+            // based on product id, products has an element, it is an array, though.
             return cart.getProducts({ where : { id }});
         })
         .then(products => {
+            
             let product;
+            
             if(products.length > 0) {
+                // based on product id, products has an element.
                 product = products[0];
             }
-
-            let newQty = 1;
+            
+            // handling the exisiting product,
+            //      we just need to update the qty.
             if(product) {
-
+                
+                const oldQty = product.cartItems.qty;
+                newQty = oldQty + 1;
+                
+                // just update is required.
+                // just fetch all data associated with productId in that table 
+                //  and update qty in the table.
+                // refectoring
+                // return fetchCart.addProduct(product, { through : { qty: newQty } });
+                return product;
             } 
-            return Product.findByPk(id)
-                .then(product => {
-                    // addProducts: matic only in many to many
-                    // ************************************
-                    return fetchCart.addProducts(product, { through: {qty : newQty }})
-                });
 
+
+            // Because for now, we do not have any product,
+            // For the first product in cart
+            return Product.findByPk(id);
+                // .then(product => {
+                    
+                    // How to fetch this data?
+                    
+                     // The first parameter: fetch all information asscociated productId
+                     // The second paramter: update the through table (cartItems) by using Deep clone 
+                     //     is required for the qty
+
+                     // The it will be stored like the one below.
+                     /* 
+                    
+                        product {
+                            dataValues:
+                            { id: 1,
+                                title: 'aaa',
+                                price: 111,
+                                imageUrl: 'aaa',
+                                description: 'afasfa',
+                                createdAt: 2019-02-23T04:30:10.000Z,
+                                updatedAt: 2019-02-23T04:30:10.000Z,
+                                userId: 1,
+                                //********************************************* 
+                                cartItems: [cartItems] 
+                            }
+                            
+                    */
+                    // return fetchCart.addProduct(product, { through: {qty : newQty }});
+                // });
+
+        })
+        .then(product => {
+            fetchCart.addProduct(product, { through: {qty : newQty } });
+        })
+        .then(() => {
+            res.redirect('./cart');
         })
         .catch(e => console.log(e));
 

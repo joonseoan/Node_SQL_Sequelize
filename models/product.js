@@ -35,7 +35,6 @@ const Product = sequelize.define('product', {
     }
 });
 
-
 module.exports = Product;
 
 // only with mysql2 lib

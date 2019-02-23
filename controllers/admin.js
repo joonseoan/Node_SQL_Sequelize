@@ -134,8 +134,6 @@ exports.getProducts = (req, res, next) => {
         })
         .catch(e => { console.log(e)});
 
-
-
     // // With sequelize
     // 1)
     // Product.findAll()
@@ -185,6 +183,7 @@ exports.postAddProducts = (req, res, next) => {
     // The function name is strict!!!!
 
     // if user is an instance itself, we can use user.createProduct()
+    // user.hasMany(Product) => user.set/get/create({})
     req.user.createProduct({
 
         title,
@@ -193,7 +192,7 @@ exports.postAddProducts = (req, res, next) => {
         description
     
     })
-    .then(product => {
+    .then(() => {
         res.redirect('/');
     })
     .catch(err => {
