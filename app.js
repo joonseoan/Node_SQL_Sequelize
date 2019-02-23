@@ -10,6 +10,8 @@ app.set('view engine', 'ejs');
 const sequelize = require('./utils/database');
 const Product = require('./models/product');
 const User = require('./models/user');
+const Cart = require('./models/cart');
+const CartItems = require('./models/cart_items');
 
 const adminRouters = require('./routes/admin');
 const shopRouters = require('./routes/shop'); 
@@ -22,9 +24,10 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Eventually to gain req.user (logged in user) data 
 //  we need to make dummy data in database
 // Whenever the client requests something even regardless of routers
-//  the current existing user is going to be assgined to req.user
+//  the current existing user in the database
+//  is going to be assgined to req.user.
 // Must be ahead of routers
-//  because it should be triggered any time user request exists.
+//  because it should be triggered and pulled out any time the user request exists.
 app.use((req, res, next) => {
     User.findByPk(1)
         .then(user => {
@@ -40,16 +43,62 @@ app.use(shopRouters);
 app.use(pageNotFound);
 
 // [Association]
-// Before all the models are up
-// we need to define associations
-// If the USER deletes, products will be gone, as well.
+// Before all the models are up, we need to define associations
+// 'onDelete: 'CASCADE'': 
+//      If the USER deletes, products will be gone, as well.
 /*  
-    ASSOCIATION is set in console.log()
+    ASSOCIATION is set in console window.
     userId` INTEGER, PRIMARY KEY (`id`), FOREIGN KEY (`userId`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE) ENGINE=InnoDB; */
-Product.belongsTo(User, { constraints: true, onDelete: 'CASCADE'});
-// optional but it should be explicitly defined.
-User.hasMany(Product);
 
+// [
+        // [One to Many Associations]: Rule of thumb, Product table stores the joining reference.
+        
+        // One product has only one User.
+        Product.belongsTo(User, { constraints: true, onDelete: 'CASCADE' });
+
+        // (hasMany : one to many association)
+        /* 
+
+            hasMany is used in a One To Many relationship 
+            while belongsToMany refers to a Many To Many relationship.
+            They are both distinct relationship types and each require 
+            a different database structure - thus they take different parameters.
+        
+        */
+        // A user has many Products
+        User.hasMany(Product);
+
+// ]
+
+// [
+        // [One to One Association ] : rule of thumb here, Cart table has the User reference.
+
+        // A cart has only one User        
+        Cart.belongsTo(User);
+    
+        // A user has only one Cart.
+        User.hasOne(Cart);
+
+// ]
+
+// [
+        // [ Many to Many Association ]
+        // A foreign key pair is a primary key.
+        // ************IMPORTANT
+        // In many to many relation, the either of tables can't take the reference.
+        // because each table belongs to the counter partner.
+        // In this many to many relation, the third (virtual) table reference
+        //  must be create.
+
+        // A Cart has many Products
+        // the third (virtual) table here created by using CartItems model.
+        Cart.belongsToMany(Product, { through: CartItems });
+
+        // A product has many Cart???
+        // Many customers reserve a product.
+        Product.belongsToMany(Cart, { through: CartItems });
+
+// ]
 
 
 // All the models up ************************************************************* 
@@ -71,6 +120,7 @@ User.hasMany(Product);
 */
 
 // 
+// sequelize.sync({ force: true })
 sequelize.sync()
 
     // Eventually to gain req.user data we need to make dummy data in database
@@ -89,17 +139,32 @@ sequelize.sync()
 
     })
     .then(user => {
+        
         if(!user) return User.create({name: 'Max', email: 'test@test.com' });
         return user;
-    }).then(user => {
-        if(user) {
-            app.listen(3000, () => {
 
-                console.log('Port: 3000')
-            
-            });
+    }).then(user => {
+
+        if(user) {
+
+            // cart does not a specific attributes except for id
+            //  which is not necessary the user type.
+            return user.createCart();
+
         }
+    }).then(cart =>{
+
+        if(cart) { 
+
+            app.listen(3000, () => {
+                console.log('Listening.');
+            });
+
+        }
+    
     })
     .catch(e => {
+
         console.log(e);
+        
     });

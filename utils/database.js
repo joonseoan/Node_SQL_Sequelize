@@ -1,7 +1,6 @@
 // sequelize : findById => findByPk() 
 
 // connection setup
-
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
 const { mysql_key } = require('../config/keys')

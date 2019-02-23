@@ -115,40 +115,98 @@ exports.getIndex = (req, res, next) => {
 
  }
 
+
+// Required Association!!!
 exports.getCart = (req, res, next) => {
 
-    Cart.getCart(cart => {
-        Product.fetchAll(products => {
-            const cartProducts = [];
-            for(product of products) {
-                const cartProductData = cart.products.find(prod => prod.id === product.id);
-                if(cartProductData) {
-                    console.log('cartProductData: ', cartProductData)
-                    cartProducts.push({productData: product, qty: cartProductData.qty});
-                }
-            }
+    // It is not available.
+    // console.log(req.user.cart);
+
+    // We must use req.user.getCart();
+    req.user.getCart()
+        .then(cart => {
+
+            console.log(cart);
+            
+            /* 
+                Purlal 's' of getProducts() is because of many to many association
+                Only in many to many association, it possibly enables us 
+                to make getCarts(); and also getProducts() through CartItems.
+
+                Cart.belongsToMany(Product, { through: CartItems });
+                Product.belongsToMany(Cart, { through: CartItems });
+            */
+            if(cart) return cart.getProducts();
+        })
+        .then(products => {
             res.render('shop/cart', {
                 docTitle: 'Your Cart',
                 path: '/cart',
-                products: cartProducts
+                products
             });
-        });
+        })
+        .catch(e => console.log(e));
+    
+    // Only with a json file.
+    // Cart.getCart(cart => {
+    //     Product.fetchAll(products => {
+    //         const cartProducts = [];
+    //         for(product of products) {
+    //             const cartProductData = cart.products.find(prod => prod.id === product.id);
+    //             if(cartProductData) {
+    //                 console.log('cartProductData: ', cartProductData)
+    //                 cartProducts.push({productData: product, qty: cartProductData.qty});
+    //             }
+    //         }
+    //         res.render('shop/cart', {
+    //             docTitle: 'Your Cart',
+    //             path: '/cart',
+    //             products: cartProducts
+    //         });
+    //     });
 
-    });
+    // });
 
 }
 
 exports.postCart = (req, res, next) => {
 
     const id = req.body.id;
+    let fetchCart;
+    req.user.getCart()
+        .then(cart => {
+            fetchCart = cart;
+            // console.log(cart.getProducts());
+            return cart.getProducts({ where : { id }});
+        })
+        .then(products => {
+            let product;
+            if(products.length > 0) {
+                product = products[0];
+            }
 
-    Product.findProductById(id, product =>{
-        // console.log('product@findProdut : ', product);
-        Cart.addProduct(product.id, product.price);
-    });
+            let newQty = 1;
+            if(product) {
 
-    // It should be run in Promise
-    res.redirect('/cart');
+            } 
+            return Product.findByPk(id)
+                .then(product => {
+                    // addProducts: matic only in many to many
+                    // ************************************
+                    return fetchCart.addProducts(product, { through: {qty : newQty }})
+                });
+
+        })
+        .catch(e => console.log(e));
+
+    // only with a json file.
+    // Product.findProductById(id, product =>{
+    //     // console.log('product@findProdut : ', product);
+    //     Cart.addProduct(product.id, product.price);
+    // });
+
+    // // It should be run in Promise
+    // res.redirect('/cart');
 
 }
 

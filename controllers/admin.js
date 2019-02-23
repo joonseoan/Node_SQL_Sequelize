@@ -175,12 +175,16 @@ exports.postAddProducts = (req, res, next) => {
     //      and required to manually save the value with another code.
 
     // 3) More Elegant way : Product.create() => createProduct({})
-    // because when we create the schema in model, define(product)
-    //      creates a function with a name like 'createProduct()'
+    //  because when we create the schema in model, define(product)
+    //      creates a function with a name like 'createProduct()' in 'Product class'!!!
     //      and then define a parameter(/ an object) like the ones below.
-    // Then, the function delivers to the req.user's attribute to be invoked.
+
+    // Then, the class is instantiated with the child class with the instance
+    //   that is from User to access to the parent class's method.
     // By the way, it uses promise() to return the result.
     // The function name is strict!!!!
+
+    // if user is an instance itself, we can use user.createProduct()
     req.user.createProduct({
 
         title,
