@@ -281,6 +281,10 @@ exports.postCart = (req, res, next) => {
 
         })
         .then(product => {
+            
+            // The first parameter: fetch all information asscociated productId
+            // The second paramter: update the through table (cartItems) by using Deep clone 
+            //     is required for the qty
             fetchCart.addProduct(product, { through: {qty : newQty } });
         })
         .then(() => {
