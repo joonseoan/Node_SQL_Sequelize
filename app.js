@@ -11,6 +11,9 @@ const Product = require('./models/product');
 const User = require('./models/user');
 const Cart = require('./models/cart');
 const CartItems = require('./models/cart_items');
+const Order = require('./models/order');
+const OrderItems = require('./models/order-items');
+
 
 const adminRouters = require('./routes/admin');
 const shopRouters = require('./routes/shop'); 
@@ -102,6 +105,16 @@ app.use(pageNotFound);
         // Many customers reserve a product.
         // cart.get/set/addProducts() and addProduct()
         Product.belongsToMany(Cart, { through: CartItems });
+
+// ]
+
+// [
+        
+        Order.belongsTo(User);
+        User.hasMany(Order);
+
+        Order.belongsToMany(Product, { through: OrderItems });
+        Product.belongsToMany(Order, { through: OrderItems });
 
 // ]
 

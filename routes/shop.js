@@ -9,7 +9,8 @@ const {
     getCheckout, 
     getOrders, 
     getProduct,
-    postCartDeleteItem } = require('../controllers/shop');
+    postCartDeleteItem,
+    postOrder } = require('../controllers/shop');
 
 // index page with all product list
 router.get('/', getIndex);
@@ -27,6 +28,8 @@ router.post('/cart', postCart);
 
 // to delete a product only in '/shop/cart'
 router.post('/cartDeleteItem', postCartDeleteItem);
+
+router.post('/createOrders', postOrder);
 
 router.get('/orders', getOrders);
 router.get('/checkout', getCheckout);

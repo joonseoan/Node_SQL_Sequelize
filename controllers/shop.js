@@ -1,5 +1,4 @@
 const Product = require('../models/product');
-const Cart = require('../models/cart');
 
 exports.getProducts = (req, res, next) => {
 
@@ -91,7 +90,7 @@ exports.getIndex = (req, res, next) => {
     Product.findAll()
         .then((products) => {
             // products [ {id, title, price, imageUrl, description}, {id, title, price, imageUrl, description}]
-            console.log(products);
+            // console.log(products);
             res.render('shop/index', { 
                 products,
                 docTitle: 'Shop', 
@@ -133,7 +132,7 @@ exports.getCart = (req, res, next) => {
                         }
             
             */
-            console.log(cart);
+            // console.log(cart);
             
             /* 
                 Purlal 's' of getProducts() is because of many to many association
@@ -285,7 +284,7 @@ exports.postCart = (req, res, next) => {
             // The first parameter: fetch all information asscociated productId
             // The second paramter: update the through table (cartItems) by using Deep clone 
             //     is required for the qty
-            fetchCart.addProduct(product, { through: {qty : newQty } });
+            return fetchCart.addProduct(product, { through: {qty : newQty } });
         })
         .then(() => {
             res.redirect('./cart');
@@ -303,23 +302,126 @@ exports.postCart = (req, res, next) => {
 
 }
 
+exports.postOrder = (req, res, next) => {
+    
+    let fetchedCart;
+    
+    req.user.getCart()
+        .then(cart => {
+            fetchedCart = cart;
+            return cart.getProducts();
+        })
+        .then(products => {
+            
+            // console.log('products ===============================================> ', products.cartItems)
+
+            // because Order.belongsTo(User);
+            // User.hasMany(Order);
+            return req.user
+                // INSERT id 
+                //  because Order table has 'id' only that automatically increments
+                .createOrder()
+                .then(order => {
+
+                    // fetching data. not adding data into database
+                    // new products with orderItems
+
+                    // => [1, 1]
+                    // const ddd = products.map(product => {
+                    //     return product.orderItems = {qty: product.cartTiems.qty };
+                    //     // return product.cartItems.qty;
+                    // });
+
+
+                    return order.addProducts(products.map(product => {
+
+                        console.log('product ===============================================> ', product)
+
+                        // product.orderItems = product.cartItems.qty;
+                        product.orderItems = { qty: product.cartItems.qty };
+                        
+                        // return [ product, product ]
+                        return product;
+
+                        // Then run addProducts while we are fetching products
+
+                    }));
+                
+                
+                })
+                .catch(e => console.log(e));
+        
+        })
+        .then((orders) => {
+
+            // Test more why we need this???
+            return fetchedCart.setProducts(null);
+
+        })
+        .then(() => {
+            
+            res.redirect('./orders');
+        })
+        .catch(e => console.log(e));
+    
+}
+
 exports.getOrders = (req, res, next) => {
 
-    res.render('shop/orders', {
-        docTitle: 'Your Orders',
-        path: '/orders'
-    });
+    req.user.getOrders({ include: ['products']})
+        .then(products => {
+            res.render('shop/orders', {
+                docTitle: 'Your Orders',
+                path: '/orders',
+                orders: products
+            });
+        })
+        .catch(e => console.log(e));    
 
 }
 
 exports.postCartDeleteItem = ( req, res, next) => {
+
     const { id }= req.body;
 
-    Product.findProductById(id, product => {
-        console.log('deleteCartPRODUCT ITEM: ', product)
-        Cart.deleteProduct(id, product.price);
-        res.redirect('/cart');
+    req.user.getCart().then(cart => {
+        return cart.getProducts({ where : { id }});
+    })
+    .then(products =>{
+        const product = products[0];
+        // delete cartItems inside of
+        /* 
+
+            dataValues:
+                { id: 1,
+                    title: 'aaa',
+                    price: 111,
+                    imageUrl: 'aaa',
+                    description: 'afasfa',
+                    createdAt: 2019-02-23T04:30:10.000Z,
+                    updatedAt: 2019-02-23T04:30:10.000Z,
+                    userId: 1,
+                    //********************************************* 
+                    cartItems: [cartItems] 
+                }
+        
+        */
+        console.log('product.cartItems: ', product.cartItems);
+        return product.cartItems.destroy();
+    })
+    .then(() => {
+        res.redirect('./cart');
+    })
+    .catch(err => {
+        console.log(err);
     });
+
+    // With a json file only
+    // Product.findProductById(id, product => {
+    //     console.log('deleteCartPRODUCT ITEM: ', product)
+    //     Cart.deleteProduct(id, product.price);
+    //     res.redirect('/cart');
+    // });
 
 }
 
