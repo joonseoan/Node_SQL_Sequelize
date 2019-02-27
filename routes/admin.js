@@ -12,7 +12,7 @@ const {
     // to display user input ui
     router.get('/addProducts', getAddProducts);
     
-    // render the user input data into admin/products.ejs 
+    // to render the user input data into admin/products.ejs 
     router.get('/products',getProducts);
     
     // only to deliver user input data from './admin/addProducts' to '/admin/products'

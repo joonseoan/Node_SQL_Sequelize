@@ -5,14 +5,15 @@ const {
     getProducts, 
     getIndex, 
     getCart,
-    postCart, 
-    getCheckout, 
+    postCart,
     getOrders, 
     getProduct,
     postCartDeleteItem,
     postOrder } = require('../controllers/shop');
 
 // index page with all product list
+// Must differentiate app.use((req, res, next)) by using 'get' 
+//   which is required to specify an exact route 
 router.get('/', getIndex);
 
 // product list page with product details
@@ -29,9 +30,10 @@ router.post('/cart', postCart);
 // to delete a product only in '/shop/cart'
 router.post('/cartDeleteItem', postCartDeleteItem);
 
+// to add user-order
 router.post('/createOrders', postOrder);
 
+// to display user-order
 router.get('/orders', getOrders);
-router.get('/checkout', getCheckout);
 
 module.exports = router;

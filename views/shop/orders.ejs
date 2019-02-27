@@ -12,7 +12,7 @@
                         <li>
                             <h1># <%= order.id %></h1>
                             <ul>
-                                <% console.log('order in ejs ============================================>', order) %>)
+                                <% console.log('order in ejs ============================================>', order) %>
                                 <% order.products.forEach(product => { %>
                                     <li>
                                         <%= product.title %> (<%= product.orderItems.qty %>)

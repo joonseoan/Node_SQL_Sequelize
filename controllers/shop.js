@@ -12,36 +12,36 @@ exports.getProducts = (req, res, next) => {
         })
         .catch(e => {
             console.log(e);
-        })
-
-    // Product.fetchAll()
-    //     .then(([products, meta]) => {
-
-    //         res.render('shop/productList', { 
-    //             products, 
-    //             docTitle: 'All Products', 
-    //             path: '/products'
-    //          });
-
-    //     })
-    //     .catch(err => { console.log('cannot get fetch all')});
-
+        });
         
 }
 
 exports.getProduct = (req, res, next) => {
     
     // id must be identified with router.get('/products/:id')
-    const id = req.params.id;
+    const { id } = req.params;
     
     // with sequelize
-    // 2) id : id => first one is from column name wd defined
+    
+    // 2) But it is simpler than the one above.
+    Product.findByPk(id)
+        .then(product => {
+
+            // no array here other than the one used by mysql2
+            res.render('shop/productDetail', {
+                product,
+                docTitle: product.title,
+                path: '/products'
+            });
+        })
+        .catch(e => { console.log(e)});
+
+    // 1) id : id => first one is from column name we defined
     //      the second one is form the variable above
     // Product.findAll({ where: {id}})
     //     .then(products => {
         
     //         // products : [{ id, title, price, imageUrl, description }]
-    //         // console.log('products:  %%%%%%%%%%%%%%%%%%5', products)
             
     //         // no array here other than the one used by mysql2
     //         res.render('shop/productDetail', {
@@ -52,28 +52,25 @@ exports.getProduct = (req, res, next) => {
     //     })
     //     .catch(e => { console.log(e)});
 
-    // 1) But it is simpler than the one above.
-    Product.findByPk(id)
-        .then(product => {
-            // no array here other than the one used by mysql2
-            res.render('shop/productDetail', {
-                product,
-                docTitle: product.title,
-                path: '/products'
-            });
-        })
-        .catch(e => { console.log(e)});
-
     // -----------------------------------------------------
     // only with mysql2
-    // Product.findProductById(id)
+
+    /* 
+        In the Product class
+        static findById(id) {
+            return db.execute('SELECT * FROM products WHERE products.id = ?', [id]);
+        }
+    
+    */
+    // Product.findById(id)
+    //     //By using ES6
     //     .then(([product]) => {
     //         console.log(product, 'products in [product]')
     //         res.render('shop/productDetail', {
     //             // 'product' is still an array.
     //             // We need to extract an element.
     //             product: product[0],
-    //             docTitle: product.title,
+    //             docTitle: product[0].title,
     //             path: '/products'
     //          });
     //     })
@@ -100,7 +97,7 @@ exports.getIndex = (req, res, next) => {
         .catch(e => console.log(e));
 
     // Only with mysql2
-    // Product.fetchAll().then(([products, meta ]) => {
+    // Product.fetchAll().then(([ products, meta ]) => {
 
     //     console.log(products)
     //     res.render('shop/index', { 
@@ -113,6 +110,112 @@ exports.getIndex = (req, res, next) => {
     // });
 
  }
+
+ // Add to Cart button
+ exports.postCart = (req, res, next) => {
+
+    let fetchCart;
+
+    // product id
+    const { id } = req.body;
+
+    let newQty = 1;
+
+    req.user.getCart()
+        .then(cart => {
+
+            fetchCart = cart;
+
+            // console.log(cart.getProducts());
+            // based on product id, products has an element, it is an array, though.
+            return cart.getProducts({ where: { id } });
+        })
+        .then(products => {
+            
+            let product;
+            
+            if(products.length > 0) {
+
+                // based on product id, products has an element.
+                product = products[0];
+
+            }
+            
+            // handling the exisiting product,
+            //      we just need to update the qty.
+            if(product) {
+                
+                // through instance, update attibute of the class
+                // can be "cart.cartItems.qty" as well.
+
+                // as soon as addProdct(product, { through { qty: newQty } }) excutes,
+                // cartitems assigned to 'product' and 'cart'
+                const oldQty = product.cartItems.qty;
+                newQty = oldQty + 1;
+                
+                // just update is required.
+                // just fetch all data associated with productId in that table 
+                //  and update qty in the table.
+                // return fetchCart.addProduct(product, { through : { qty: newQty } });
+                
+                // refactoring
+                return product;
+
+            } 
+
+            // Because for now, we do not have any product,
+            // For the first product in cart
+            return Product.findByPk(id);
+                // .then(product => {
+                    
+                    // How to fetch this data?
+                    
+                     // The first parameter: fetch all information asscociated productId
+                     // The second paramter: update the through table (cartItems) by using Deep clone 
+                     //     is required for the qty
+
+                     // The it will be stored like the one below.
+                     /* 
+                    
+                        product {
+                            dataValues:
+                            { id: 1,
+                                title: 'aaa',
+                                price: 111,
+                                imageUrl: 'aaa',
+                                description: 'afasfa',
+                                createdAt: 2019-02-23T04:30:10.000Z,
+                                updatedAt: 2019-02-23T04:30:10.000Z,
+                                userId: 1,
+                                //********************************************* 
+                                cartItems: [cartItems] 
+                            }
+                            
+                    */
+                    // return fetchCart.addProduct(product, { through: {qty : newQty }});
+                // });
+
+        })
+        .then(product => {
+            
+            // The first parameter: fetch all information asscociated productId
+            // The second paramter: update the through table (cartItems) by using Deep clone 
+            //     is required for the qty
+            
+            // product.cartItems.qty is for updating attributes in class by using instance
+            // It is for executing a function inside of the class
+
+            // Hence, it is not working : it is not a format of addProduct function
+            // return fetchCart.addProduct(product, through[qty] = newQty );
+            return fetchCart.addProduct(product, { through: { qty: newQty } });
+            
+        })
+        .then(() => {
+            res.redirect('./cart');
+        })
+        .catch(e => console.log(e));
+
+}
 
 // Required Association!!!
 exports.getCart = (req, res, next) => {
@@ -183,123 +286,6 @@ exports.getCart = (req, res, next) => {
         })
         .catch(e => console.log(e));
     
-    // Only with a json file.
-    // Cart.getCart(cart => {
-    //     Product.fetchAll(products => {
-    //         const cartProducts = [];
-    //         for(product of products) {
-    //             const cartProductData = cart.products.find(prod => prod.id === product.id);
-    //             if(cartProductData) {
-    //                 console.log('cartProductData: ', cartProductData)
-    //                 cartProducts.push({productData: product, qty: cartProductData.qty});
-    //             }
-    //         }
-    //         res.render('shop/cart', {
-    //             docTitle: 'Your Cart',
-    //             path: '/cart',
-    //             products: cartProducts
-    //         });
-    //     });
-
-    // });
-
-}
-
-exports.postCart = (req, res, next) => {
-
-    // product id
-    const id = req.body.id;
-
-    let fetchCart;
-    let newQty = 1;
-
-    req.user.getCart()
-        .then(cart => {
-
-            fetchCart = cart;
-            // console.log(cart.getProducts());
-            // based on product id, products has an element, it is an array, though.
-            return cart.getProducts({ where : { id }});
-        })
-        .then(products => {
-            
-            let product;
-            
-            if(products.length > 0) {
-                // based on product id, products has an element.
-                product = products[0];
-            }
-            
-            // handling the exisiting product,
-            //      we just need to update the qty.
-            if(product) {
-                
-                const oldQty = product.cartItems.qty;
-                newQty = oldQty + 1;
-                
-                // just update is required.
-                // just fetch all data associated with productId in that table 
-                //  and update qty in the table.
-                // refectoring
-                // return fetchCart.addProduct(product, { through : { qty: newQty } });
-                return product;
-            } 
-
-
-            // Because for now, we do not have any product,
-            // For the first product in cart
-            return Product.findByPk(id);
-                // .then(product => {
-                    
-                    // How to fetch this data?
-                    
-                     // The first parameter: fetch all information asscociated productId
-                     // The second paramter: update the through table (cartItems) by using Deep clone 
-                     //     is required for the qty
-
-                     // The it will be stored like the one below.
-                     /* 
-                    
-                        product {
-                            dataValues:
-                            { id: 1,
-                                title: 'aaa',
-                                price: 111,
-                                imageUrl: 'aaa',
-                                description: 'afasfa',
-                                createdAt: 2019-02-23T04:30:10.000Z,
-                                updatedAt: 2019-02-23T04:30:10.000Z,
-                                userId: 1,
-                                //********************************************* 
-                                cartItems: [cartItems] 
-                            }
-                            
-                    */
-                    // return fetchCart.addProduct(product, { through: {qty : newQty }});
-                // });
-
-        })
-        .then(product => {
-            
-            // The first parameter: fetch all information asscociated productId
-            // The second paramter: update the through table (cartItems) by using Deep clone 
-            //     is required for the qty
-            return fetchCart.addProduct(product, { through: {qty : newQty } });
-        })
-        .then(() => {
-            res.redirect('./cart');
-        })
-        .catch(e => console.log(e));
-
-    // only with a json file.
-    // Product.findProductById(id, product =>{
-    //     // console.log('product@findProdut : ', product);
-    //     Cart.addProduct(product.id, product.price);
-    // });
-
-    // // It should be run in Promise
-    // res.redirect('/cart');
-
 }
 
 exports.postOrder = (req, res, next) => {
@@ -317,10 +303,10 @@ exports.postOrder = (req, res, next) => {
 
             // because Order.belongsTo(User);
             // User.hasMany(Order);
-            return req.user
-                // INSERT id 
-                //  because Order table has 'id' only that automatically increments
-                .createOrder()
+
+            // INSERT id 
+            //  because 'Order' table has 'id' only that automatically increments
+            return req.user.createOrder()
                 .then(order => {
 
                     // fetching data. not adding data into database
@@ -331,8 +317,6 @@ exports.postOrder = (req, res, next) => {
                     //     return product.orderItems = {qty: product.cartTiems.qty };
                     //     // return product.cartItems.qty;
                     // });
-
-
                     return order.addProducts(products.map(product => {
 
                         console.log('product ===============================================> ', product)

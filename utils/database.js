@@ -7,7 +7,6 @@ const { mysql_key } = require('../config/keys')
 
 // intantiate Sequelize class library to be a database, 'node_complete'.
 // In order to use another database, we need to uniqely intantiate this calss again
-
 const sequelize = new Sequelize('node_complete', 'root', mysql_key, { 
     // this is an option for mysql2 to be set
     //  because there are different sql out there.

@@ -1,122 +1,61 @@
 const express = require('express');
+
+// invoke express here and hence transform express into global objects. 
+// Therefore, we can define and invoke every async app function in order of line.
 const app = express();
+
 const bodyParser = require('body-parser');
 const path = require('path');
 
 // connection are up! *****************************************************************
 const sequelize = require('./utils/database');
 
+// Activate 'sequelize' models
 // must run the models before 'sequelize.sync()' donw below. ********************
-const Product = require('./models/product');
 const User = require('./models/user');
-const Cart = require('./models/cart');
-const CartItems = require('./models/cart_items');
-const Order = require('./models/order');
-const OrderItems = require('./models/order-items');
 
-
+// Execute routes
 const adminRouters = require('./routes/admin');
 const shopRouters = require('./routes/shop'); 
 const { pageNotFound } = require('./controllers/pageNotFound');
 
+// Execute front-ends
 app.set('view engine', 'ejs');
 // app.set('views', 'views');
-
-app.use(bodyParser.urlencoded({extended: false}));
 
 // the path that html can access
 app.use(express.static(path.join(__dirname, 'public')));
 
+// boty parser to get json format
+app.use(bodyParser.urlencoded({extended: false}));
+
+// Must be spotted above routes because all the client requests *****
+//      pass though this middleware
+// Just temp because we do not have authentication so far. *****
+
 // Eventually to gain req.user (logged in user) data/value 
-// Whenever the client requests something even regardless of routes
-//  the current existing user can be found in req.user (logge in).
-// Must be ahead of routers
-//  because it should be triggered and pulled out any time the user request exists.
+//      whenever the client requests something even regardless of routes
 app.use((req, res, next) => {
     User.findByPk(1)
-        .then(user => {
-            if(user) req.user = user;
-            next();
-        })
-        .catch(e => { throw new Error('Unable to find the user.') });
+    .then(user => {
+        // user is an istance!!!!
+        if(user) req.user = user;
+        next();
+    })
+    .catch(e => { throw new Error('Unable to find the user.'); });
 });
+
+// excutes association!!!!
+require('./models');
 
 // routers
 app.use('/admin', adminRouters);
 app.use(shopRouters);
+
+// Must be at the end of routes
+//  when the client unables to find the routes 
+//  because no route is specified.
 app.use(pageNotFound);
-
-// [Association]
-// Before all the models are up by 'sequelize.sync()', we need to define associations
-// 'onDelete: 'CASCADE' (Option): If the USER deletes, products will be gone, as well.
-
-/*  
-    ASSOCIATION is set in console window.
-    userId` INTEGER, PRIMARY KEY (`id`), FOREIGN KEY (`userId`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE) ENGINE=InnoDB; */
-
-// [
-        // [One to Many Associations]: Rule of thumb, Product table stores the joining reference.
-        
-        // One product has only one User.
-        Product.belongsTo(User, { constraints: true, onDelete: 'CASCADE' });
-
-        // (hasMany : one to many association)
-        /* 
-
-            hasMany is used in a One To Many relationship 
-            while belongsToMany refers to a Many To Many relationship.
-            They are both distinct relationship types and each require 
-            a different database structure - thus they take different parameters.
-        
-        */
-        // A user has many Products
-        // automatically user.set/get/createProdutct()
-        User.hasMany(Product);
-
-// ]
-
-// [
-        // [One to One Association ] : rule of thumb here, Cart table has the User reference.
-
-        // A cart has only one User        
-        Cart.belongsTo(User);
-    
-        // A user has only one Cart.
-        // protoType.user= set/get/createCart()
-        User.hasOne(Cart);
-
-// ]
-
-// [
-        // [ Many to Many Association ]
-        // A foreign key pair is a primary key.
-        // ************IMPORTANT
-        // In a many-to-many relation, the either of tables can't take the reference (a foreign key).
-        // because each table belongs to the counter partner.
-        // In this many to many relation, the third (virtual) table reference
-        //  must be create.
-
-        // A Cart has many Products
-        // the third (virtual) table here created by using CartItems model.
-        // product.get/set/addCarts() and addCart()
-        Cart.belongsToMany(Product, { through: CartItems });
-
-        // A product has many Cart???
-        // Many customers reserve a product.
-        // cart.get/set/addProducts() and addProduct()
-        Product.belongsToMany(Cart, { through: CartItems });
-
-// ]
-
-// [
-        
-        Order.belongsTo(User);
-        User.hasMany(Order);
-
-        Order.belongsToMany(Product, { through: OrderItems });
-        Product.belongsToMany(Order, { through: OrderItems });
-
-// ]
 
 
 // All the models up ************************************************************* 
@@ -137,22 +76,22 @@ app.use(pageNotFound);
 
 */
 
-// 
-// sequelize.sync({ force: true })
-sequelize.sync()
+// Until sequelize is done, 
+//  the app does not listen to the client requiest. 
+sequelize.sync({ force: true })
+// sequelize.sync()
 
     // Eventually to gain req.user data we need to make and store dummy data in database
-    // Whenever the server tries to connect to database
-    //  and to make the tables are available (up!)
-    //  the table will create the first new user data automatically. 
-    // By the way squelelize.sync() is always invoked and run ahead of 
+    //  whenever the server tries to connect to database
+    //  and to make the tables are available (up!).
+    // The table will create the first new user data automatically. 
+    // By the way, squelelize.sync() is always invoked and run ahead of 
     //  app.use({ req.user = user}) up and above because it has app.listen()
     .then(() => {
                 
         // finally after all models (tables) are created
         //      of course, and all the apps (express) correctly are up as well
         //  listen to requests form the client.
-
         return User.findByPk(1);
 
     })
@@ -164,6 +103,7 @@ sequelize.sync()
     }).then(user => {
 
         if(user) {
+
             /* 
             
                     { id: 1,
@@ -173,17 +113,18 @@ sequelize.sync()
                     createdAt: 2019-02-23T03:54:59.524Z },
             
             */
+
             // console.log(user)
 
-            // cart does not a specific attributes except for id
-            //  which is not necessary one the user specifies.
+            // cart does not have a specific attributes except for id
+            //  which is not necessary  for us to write paramters at createCart().
             
-            // Insert Data into database with user pk
-            // ----------------------------------------------------------------- Just create USER AND CART ASSOCIATION SO FAR, NOT PRODUCT!!!
+            // Insert userId into the cart table
             return user.createCart();
 
         }
-    }).then(cart =>{
+    })
+    .then(cart =>{
 
         if(cart) { 
 
