@@ -8,7 +8,8 @@ const OrderItems = require('./order-items');
 
 // [Association]
 // Before all the models are up by 'sequelize.sync()', we need to define associations
-// 'onDelete: 'CASCADE' (Option): If the USER deletes, products will be gone, as well.
+
+// ******* 'onDelete: 'CASCADE' (Option): If the USER deletes, products will be gone, as well.
 
 /*  
     ASSOCIATION is set in console window.
@@ -22,21 +23,18 @@ const OrderItems = require('./order-items');
 
         // (hasMany : one to many association)
         /* 
-
             hasMany is used in a One To Many relationship 
                 while belongsToMany refers to a Many To Many relationship.
-            They are both distinct relationship types and each require 
+            They are both distinct relationship types and each requires 
             a different database structure - thus they take different parameters.
-        
         */
+
         // A user has many Products
         // automatically user.set/get/createProdutct()
         User.hasMany(Product);
-
 // ]
 
 // [
-        
         // [One to One Association ] : rule of thumb here, Cart table has the User reference.
 
         // A cart has only one User        
@@ -45,11 +43,9 @@ const OrderItems = require('./order-items');
         // A user has only one Cart.
         // protoType.user= set/get/createCart()
         User.hasOne(Cart);
-
 // ]
 
 // [
-
         // [ Many to Many Association ]
         // A foreign key pair is a primary key.
         // ************IMPORTANT
@@ -67,16 +63,12 @@ const OrderItems = require('./order-items');
         // A product has many Carts
         // cart.get/set/addProducts() and addProduct()
         Product.belongsToMany(Cart, { through: CartItems });
-
 // ]
 
 // [
-        
         Order.belongsTo(User);
         User.hasMany(Order);
 
         Order.belongsToMany(Product, { through: OrderItems });
         Product.belongsToMany(Order, { through: OrderItems });
-
 // ]
-

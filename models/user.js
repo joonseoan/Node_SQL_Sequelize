@@ -7,12 +7,10 @@ module.exports = sequelize.define('user', {
     
     // SQL must specify id!!!
     id: {
-
         type: INTEGER,
         autoIncrement: true,
         allowNull : false,
         primaryKey: true
-
     },
     
     name: {

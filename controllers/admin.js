@@ -1,23 +1,18 @@
 const Product = require('../models/product');
 
 exports.getAddProducts = (req, res, next) => {
-
     res.render('admin/editProducts', {
         docTitle: 'Add Products',
         path: '/admin/addProducts',
         editing: false
-      
     });
-
 }
 
 // to INSERT 'user input data' to the database
 exports.postAddProducts = (req, res, next) => {
-    
     const {title, imageUrl, description, price } = req.body;
     
     // with sequelize
-
     // [INSERT]
     // create: immediately create element data(value) 
     //      and automatically save the value in the table.
@@ -25,6 +20,7 @@ exports.postAddProducts = (req, res, next) => {
     //      and required to manually save the value with another code.
 
     // --------------------------------------------------------
+    
     // 3) More Elegant way : 
     //     When insert data into a table: Product.create() 
     //     When insert data into associate tables: createProduct({})
@@ -95,7 +91,6 @@ exports.postAddProducts = (req, res, next) => {
     //         res.redirect('/');
     //     })
     //     .catch(err => {console.log(err)});
-
 }
 
 exports.getEditProduct = (req, res, next) => {
@@ -244,5 +239,4 @@ exports.deleteProduct = (req, res, next) => {
 
     // Only with a json file
     // Product.deleteById(id);
-
 }

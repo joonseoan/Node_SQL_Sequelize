@@ -78,32 +78,25 @@ app.use(pageNotFound);
 
 // Until sequelize is done, 
 //  the app does not listen to the client requiest. 
-sequelize.sync({ force: true })
-// sequelize.sync()
-
+// sequelize.sync({ force: true })
+sequelize.sync()
     // Eventually to gain req.user data we need to make and store dummy data in database
     //  whenever the server tries to connect to database
     //  and to make the tables are available (up!).
     // The table will create the first new user data automatically. 
-    // By the way, squelelize.sync() is always invoked and run ahead of 
-    //  app.use({ req.user = user}) up and above because it has app.listen()
     .then(() => {
                 
         // finally after all models (tables) are created
         //      of course, and all the apps (express) correctly are up as well
         //  listen to requests form the client.
         return User.findByPk(1);
-
     })
     .then(user => {
-        
-        if(!user) return User.create({name: 'Max', email: 'test@test.com' });
+        if(!user) return User.create({name: 'Joon', email: 'test@test.com' });
         return user;
-
-    }).then(user => {
-
+    })
+    .then(user => {
         if(user) {
-
             /* 
             
                     { id: 1,
@@ -121,22 +114,15 @@ sequelize.sync({ force: true })
             
             // Insert userId into the cart table
             return user.createCart();
-
         }
     })
     .then(cart =>{
-
         if(cart) { 
-
             app.listen(3000, () => {
                 console.log('Listening.');
             });
-
         }
-    
     })
     .catch(e => {
-
         console.log(e);
-        
     });

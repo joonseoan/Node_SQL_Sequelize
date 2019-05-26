@@ -37,12 +37,12 @@ exports.getProduct = (req, res, next) => {
         .catch(e => { console.log(e)});
 
     // 1) id : id => first one is from column name we defined
-    //      the second one is form the variable above
+    //      the second one is from the variable above
+    
     // Product.findAll({ where: {id}})
     //     .then(products => {
         
-    //         // products : [{ id, title, price, imageUrl, description }]
-            
+    //         // products : [{ id, title, price, imageUrl, description }]        
     //         // no array here other than the one used by mysql2
     //         res.render('shop/productDetail', {
     //             product: products[0],
@@ -60,8 +60,8 @@ exports.getProduct = (req, res, next) => {
         static findById(id) {
             return db.execute('SELECT * FROM products WHERE products.id = ?', [id]);
         }
-    
     */
+
     // Product.findById(id)
     //     //By using ES6
     //     .then(([product]) => {
@@ -110,6 +110,9 @@ exports.getIndex = (req, res, next) => {
     // });
 
  }
+
+
+
 
  // Add to Cart button
  exports.postCart = (req, res, next) => {
@@ -322,7 +325,6 @@ exports.postOrder = (req, res, next) => {
                     console.log('order: ========================================> ', order)
 
                     // Adding new products with orderItems row by row
-
                     // => [1, 1]
                     // const ddd = products.map(product => {
                     //     return product.orderItems = {qty: product.cartTiems.qty };
