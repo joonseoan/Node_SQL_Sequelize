@@ -35,12 +35,10 @@ exports.postAddProducts = (req, res, next) => {
     // user.hasMany(Product) => user.set/get/create({})
     //
     req.user.createProduct({
-
         title,
         price,
         imageUrl,
         description
-    
     })
     .then(() => {
         res.redirect('/');
@@ -131,9 +129,7 @@ exports.getEditProduct = (req, res, next) => {
                 // to differentiate getAddProduct
                 editing: editMode
             });
-
         })
-
 }
 
 exports.postEditProduct = (req, res, next) => {
@@ -151,8 +147,8 @@ exports.postEditProduct = (req, res, next) => {
     //  arleady signed in.
 
     // Find the current, existing data and then edit them
-    Product.findByPk(id)
-
+    Product.findOne({ id })
+    // Product.findByPk(id)
         .then(product => {
             // const { id, title, price, imageUrl, description } = product;
             product.id = id;

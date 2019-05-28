@@ -36,7 +36,6 @@ const OrderItems = require('./order-items');
 
 // [
         // [One to One Association ] : rule of thumb here, Cart table has the User reference.
-
         // A cart has only one User        
         Cart.belongsTo(User);
     
