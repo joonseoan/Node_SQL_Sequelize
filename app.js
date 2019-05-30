@@ -79,7 +79,7 @@ app.use(pageNotFound);
 // Until sequelize is done, 
 //  the app does not listen to the client requiest. 
 // sequelize.sync({ force: true })
-sequelize.sync({ force: true })
+sequelize.sync()
     // Eventually to gain req.user data we need to make and store dummy data in database
     //  whenever the server tries to connect to database
     //  and to make the tables are available (up!).

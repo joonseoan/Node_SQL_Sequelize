@@ -23,7 +23,7 @@ exports.getProduct = (req, res, next) => {
     
     // with sequelize
     
-    // 2) But it is simpler than the one above.
+    // 2) But it is simpler than the one below.
     Product.findByPk(id)
         .then(product => {
 
@@ -110,9 +110,6 @@ exports.getIndex = (req, res, next) => {
     // });
 
  }
-
-
-
 
  // Add to Cart button
  exports.postCart = (req, res, next) => {
