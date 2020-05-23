@@ -5,7 +5,6 @@ const CartItems = require('./cart_items');
 const Order = require('./order');
 const OrderItems = require('./order-items');
 
-
 // [Association]
 // Before all the models are up by 'sequelize.sync()', we need to define associations
 

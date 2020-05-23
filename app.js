@@ -35,6 +35,8 @@ app.use(bodyParser.urlencoded({extended: false}));
 
 // Eventually to gain req.user (logged in user) data/value 
 //      whenever the client requests something even regardless of routes
+
+// It is only to get req.user!
 app.use((req, res, next) => {
     User.findByPk(1)
     .then(user => {
