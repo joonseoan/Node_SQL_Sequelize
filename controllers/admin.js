@@ -13,7 +13,7 @@ exports.postAddProducts = (req, res, next) => {
     const {title, imageUrl, description, price } = req.body;
     
     // with sequelize
-    // [INSERT]
+    // [INSERT] [ IMPORTANT!!!!!!!!!!!!!!!!!!!!!!]
     // create: immediately create element data(value) 
     //      and automatically save the value in the table.
     // build: (in javascript code) create element data(value)
@@ -32,8 +32,9 @@ exports.postAddProducts = (req, res, next) => {
     // The function name is strict!!!!
 
     // if user is an instance itself, we can use user.createProduct()
+    // [IMPORTANTA]
     // user.hasMany(Product) => user.set/get/create({})
-    //
+    
     req.user.createProduct({
         title,
         price,
@@ -77,6 +78,8 @@ exports.postAddProducts = (req, res, next) => {
     //     res.redirect('/admin/products');
     // })
     // .catch(e => {console.log(e)});
+
+
 
     // only with mysql2 
     // 'product' for a particular document, not for all ducuments in a collectionn. 
@@ -146,6 +149,8 @@ exports.postEditProduct = (req, res, next) => {
     //  because it is from 'getEditProduct' above which is 
     //  arleady signed in.
 
+
+    // [ IMPORATNANT : We can update and return data without "update method in sequelize"]!!!!!!!!!!!!11
     // Find the current, existing data and then edit them
     Product.findOne({ id })
     // Product.findByPk(id)
